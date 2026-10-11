@@ -50,25 +50,40 @@ def percentile95(values):
         values[upper] - values[lower]
     ) * (position - lower)
 
+
+@app.get("/")
+def read_root():
+    return {"message": "Latency API is running"}
+
 @app.post("/api/latency")
 def latency(request: Request):
     result = {}
 
     for region in request.regions:
-        records = [r for r in DATA if r[0] == region.lower()]
+        records = [
+            record for record in DATA
+            if record[0].lower() == region.lower()
+        ]
+
         if not records:
             continue
 
-        latencies = [r[1] for r in records]
-        uptimes = [r[2] for r in records]
+        latencies = [record[1] for record in records]
+        uptimes = [record[2] for record in records]
 
         result[region] = {
-            "avg_latency": round(sum(latencies) / len(latencies), 2),
-            "p95_latency": round(percentile95(latencies), 2),
-            "avg_uptime": round(sum(uptimes) / len(uptimes), 3),
+            "avg_latency": round(
+                sum(latencies) / len(latencies), 2
+            ),
+            "p95_latency": round(
+                percentile95(latencies), 2
+            ),
+            "avg_uptime": round(
+                sum(uptimes) / len(uptimes), 3
+            ),
             "breaches": sum(
-                latency > request.threshold_ms
-                for latency in latencies
+                value > request.threshold_ms
+                for value in latencies
             ),
         }
 
